@@ -3,8 +3,9 @@
     <title>Polio Occurences Around the World : 1980 - 2016</title>
     <link rel="stylesheet" type="text/css" href="leaflet/leaflet.css" />
     <script type="text/javascript" src="leaflet/leaflet.js"></script>
-    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-
+    <!-- <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script> -->
+<link rel="stylesheet" href="//code.jquery.com/ui/1.8.10/themes/smoothness/jquery-ui.css" type="text/css">
+<script type="text/javascript" src="//ajax.aspnetcdn.com/ajax/jquery.ui/1.8.10/jquery-ui.min.js"></script>
     <script src="leaflet/leaflet-src.js"></script>
     <!-- <script src="leaflet/leaflet.timeline.js"></script> -->
 
@@ -41,14 +42,16 @@
       }
     </style>
   </head>
+
   <body>
-    <div id="info">
+    <div id="info" style="overflow: auto">
       <h1>Polio</h1>
       <h2>1980 - 2016</h2>
       <h3>Currently displayed:</h3>
       <div id="chkboxes"></div>
     </div>
 	<div id="map"></div>
+
 	<script>
     var map;
     var ajaxRequest;
@@ -162,9 +165,12 @@
 
         var props = layer.feature.properties;
         var radius = calcPropRadius(props[timestamp]);
-        //remove the 0 occurrences from map
+        //remove the 0 occurrences props from map
         if(props[timestamp] == 0) {
           layer.removeFrom(map);
+        }
+        if(props[timestamp] > 0) {
+          layer.addTo(map);
         }
         var popupContent = '<b>' + String(props[timestamp]) + 
            ' occurrences</b><br>' +
@@ -186,10 +192,12 @@
       var props = layer.feature.properties;
       if(props[timestamp] > 0) {
         var checkbox = document.createElement('input');
+
         checkbox.type = "checkbox";
         checkbox.name = props["FIELD2"];
         checkbox.value = props[timestamp];
         checkbox.id = "cbid";
+        checkbox.checked =true;
 
         var label = document.createElement('cblabel')
         label.htmlFor = "cbid";
@@ -197,14 +205,30 @@
 
         chkboxes.appendChild(checkbox);
         chkboxes.appendChild(label);
+        chkboxes.appendChild(document.createElement("br"));
       }
 
     });
+
+
   }
 
-  function removePropSymbols() {
-    // on country uncheck, find remove or removeFrom(map)
-  }
+  //when country checkbox changes
+  $('#cbid').change(function(){
+    if(this.checked) {
+      console.log('checked');
+      cities.eachLayer(function(layer) {
+        layer.addTo(map);
+      });
+    }
+    else {
+      console.log('unchecked');
+      cities.eachLayer(function(layer) {
+        layer.removeFrom(map);  
+      });
+    }
+});
+
   //map legend
   // function createLegend(min, max) {
   //   if (min < 10) { 
@@ -289,63 +313,6 @@
     }
     temporalLegend.addTo(map); 
   }
-
-
-
-    // TODO this shows the current year being displayed
-    // function updateList(timeline){
-    //   var displayed = timeline.getLayers();
-    //   var list = document.getElementById('displayed-list');
-    //   list.innerHTML = "";
-    //   displayed.forEach(function(quake){
-    //     var li = document.createElement('li');
-    //     li.innerHTML = quake.feature.properties.title;
-    //     list.appendChild(li);
-    //   });
-    // }
-    // // // eqfeed_callback is called once the earthquake geojsonp file below loads
-
-    // // TODO : RENAME
-    //  function eqfeed_callback(data){
-    //   //use number of cases instead of quake properties magnitude
-    //    var getInterval = function(quake) {
-    //      // earthquake data only has a time, so we'll use that as a "start"
-    //      // and the "end" will be that + some value based on magnitude
-    //      // 18000000 = 30 minutes, so a quake of magnitude 5 would show on the
-    //      // map for 150 minutes or 2.5 hours
-
-    //      // TODO data is year and number of occrrences, show number in circlemarker
-    //      return {
-    //        start: quake.properties.time,
-    //        end:   quake.properties.time + quake.properties.mag * 1800000
-    //      };
-    //    };
-    //    var timelineControl = L.timelineSliderControl({
-    //      formatOutput: function(date) {
-    //        return new Date(date).toString();
-    //      }
-    //    });
-    //    var timeline = L.timeline(data, {
-    //      getInterval: getInterval,
-    //      pointToLayer: function(data, latlng){
-    //        var hue_min = 120;
-    //        var hue_max = 0;
-    //        var hue = data.properties.mag / 10 * (hue_max - hue_min) + hue_min;
-    //        return L.circleMarker(latlng, {
-    //          radius: data.properties.mag * 3,
-    //          color: "hsl("+hue+", 100%, 50%)",
-    //          fillColor: "hsl("+hue+", 100%, 50%)"
-    //        }).bindPopup('<a href="'+data.properties.url+'">click for more info</a>');
-    //      }
-    //    });
-    //    timelineControl.addTo(map);
-    //    timelineControl.addTimelines(timeline);
-    //    timeline.addTo(map);
-    //    timeline.on('change', function(e){
-    //      updateList(e.target);
-    //    });
-    //    updateList(timeline);
-    //  }
-    </script>
+</script>
 </body>
 </html>
