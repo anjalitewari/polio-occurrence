@@ -7,8 +7,6 @@
     <script type="text/javascript" src="leaflet/leaflet.js"></script>
     <script src="leaflet/leaflet-src.js"></script>
 
-    <!-- <script src="leaflet/leaflet.timeline.js"></script> -->
-
     <style>
       @import url(http://fonts.googleapis.com/css?family=Open+Sans); 
       html, body{
@@ -44,10 +42,10 @@
   </head>
 
   <body>
-    <div id="info" style="overflow: auto">
-      <h1>Polio</h1>
+     <div id="info" style="overflow: auto">
+      <h1>Polio Occurrences</h1>
       <h2>1980 - 2016</h2>
-      <h3>Currently displayed:</h3>
+      <b>Toggle checkbox to show/hide occurrence of currently shown countries</b>
       <div id="cbcountries"></div>
     </div>
 	<div id="map"></div>
@@ -153,34 +151,41 @@
       }).addTo(map);
 
       updatePropSymbols(timestamps[0], data, currcountries);
-      // update country list on side panel
-      //updateCountriestoPanel(timestamps[0]);
     }
 
     // add popups and remove markers from countries with no occurrences
     function updatePropSymbols(timestamp, data, currcountries=[]) {
-      console.log(currcountries);
+      //console.log(currcountries);
+      $("cblabel").parent().remove();
       cities.eachLayer(function(layer) {
+
         var props = layer.feature.properties;
         var radius = calcPropRadius(props[timestamp]);
-        // add/remove the 0 occurrences props from map
-        // add/remove countries that have more than one occurrences to side panel
+        // if number of occurrences is 0
         if(props[timestamp] == 0) {
           layer.removeFrom(map);
           var curr = props['FIELD2'];
-          // for(var i = 0; i < currcountries.length; i++) {
-          //   if(curr.localeCompare(currcountries[i]) == 0) {
-          //                   console.log('remove');
-
-          //     array.splice(array.indexOf(i),1);
-          //     
-          //   }
-          // }
         }
         if(props[timestamp] > 0) {
           layer.addTo(map);
           currcountries.push(props['FIELD2']);
-          //updateCountrytoPanel(timestamp, props['FIELD2'], layer, 'a');
+          var div = document.createElement('div');
+          var checkbox = document.createElement('input');
+
+          checkbox.type = "checkbox";
+          checkbox.name = props["FIELD2"];
+          checkbox.value = props[timestamp];
+          checkbox.id = "cbid";
+          checkbox.checked =true;
+
+          var label = document.createElement('cblabel')
+          label.htmlFor = "cbid";
+
+          label.appendChild(document.createTextNode(props["FIELD2"]));
+          cbcountries.appendChild(div);
+          div.appendChild(checkbox);
+          div.appendChild(label);
+          div.appendChild(document.createElement("br"));
         }
         var popupContent = '<b>' + String(props[timestamp]) + 
            ' occurrences</b><br>' +
@@ -189,7 +194,6 @@
         layer.setRadius(radius);
         layer.bindPopup(popupContent, { offset: new L.Point(0,-radius) });
       });
-      //updateCountriestoPanel(timestamp, currcountries, layer);
     }
 
     //returns prop radius depending on number of occurrences
@@ -223,20 +227,38 @@
   //}
 
   //when country checkbox changes
-  $('#cbid').change(function(){
-    if(this.checked) {
-      console.log('checked');
-      cities.eachLayer(function(layer) {
-        layer.addTo(map);
-      });
-    }
-    else {
-      console.log('unchecked');
-      cities.eachLayer(function(layer) {
-        layer.removeFrom(map);  
-      });
-    }
-});
+  $(document).on('click',function () {
+    $('input[type=checkbox]').change(function(){
+      if(this.checked) {
+        console.log($(this).attr('name') + ' checked');
+        curr = $(this).attr('name');
+        cities.eachLayer(function(layer) {
+          var props = layer.feature.properties;
+          var name = props['FIELD2'];
+
+          if(name.localeCompare(curr) == 0){
+            // console.log(name);
+            // console.log(curr);
+            layer.addTo(map);
+          }
+        });
+      }
+      else {
+        console.log($(this).attr('name') + ' unchecked');
+        curr = $(this).attr('name');
+        cities.eachLayer(function(layer) {
+          var props = layer.feature.properties;
+          var name = props['FIELD2'];
+
+          if(name.localeCompare(curr) == 0){
+            // console.log(name);
+            // console.log(curr);
+            layer.removeFrom(map); 
+          }
+        });
+      }
+    });
+  });
 
   function createSliderUI(timestamps) {
     var sliderControl = L.control({ position: 'bottomleft'} );
