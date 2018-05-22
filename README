@@ -1,0 +1,11 @@
+README
+
+Author: Anjali Tewari
+Polio Occurrences : 1980 - 2016
+This web app tracks all the occurrences of Polio around the world between the years 1980 and 2016 per country.
+
+Data for this app was found from the WHO website. It was in .xls format by default and I converted it to geoJSON after adding latitude, longitude information to each country. I used the approximate center of each country to populate the location points.
+To create the map I used Leaflet, for the temporal aspect I used rangeslider, and I used circleMarkers to display the number and relative scale of occurrences in each country.
+The temporal slider starts at 1980 and can slide all the way to 2016.
+The side panel displays a list of checkboxes for each country that had occurrences of Polio for the year, which is selected by the slider. 
+Finally, the site is hosted on heroku and source code for the site is available on github under the MIT license.

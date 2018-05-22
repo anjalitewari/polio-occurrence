@@ -8,7 +8,6 @@
     <script src="leaflet/leaflet-src.js"></script>
 
     <style>
-      @import url(http://fonts.googleapis.com/css?family=Open+Sans); 
       html, body{
         margin: 0;
         padding: 0;
@@ -50,301 +49,277 @@
     </div>
 	<div id="map"></div>
 
-	<script>
-    var map;
-    var ajaxRequest;
-    var plotlist;
-    var plotlayers=[];
-    
-    // define map
-    var osmUrl='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    var osmAttrib='Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors';
-    var osm = new L.tileLayer(osmUrl, {
-        maxZoom: 18,
-        attribution: osmAttrib,
-        noWrap: true
-     });
+  	<script>
+      var map;
+var ajaxRequest;
+var plotlist;
+var plotlayers=[];
 
-    var map = new L.map('map', {
-      layers: [osm],
-      center: new L.LatLng(0,0),
-      zoom: 2,
-      maxBounds: [[90,-180], [-90, 180]]
-    });
+// define map
+var osmUrl='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+var osmAttrib='Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors';
+var osm = new L.tileLayer(osmUrl, {
+    maxZoom: 18,
+    attribution: osmAttrib,
+    noWrap: true
+ });
 
-    // get data
-    $.getJSON('poliodata.geojson')
-    .done(function(data) {
-      var info = processData(data);
-      createPropSymbols(info.timestamps, data, info.currcountries);
-      //createLegend(info.min, info.max);
-      createSliderUI(info.timestamps);
-    })
-    .fail(function() { alert('There has been a problem loading the data.')});
+var map = new L.map('map', {
+  layers: [osm],
+  center: new L.LatLng(0,0),
+  zoom: 2,
+  maxBounds: [[90,-180], [-90, 180]]
+});
 
-    // process years and countries from data
-    function processData(data) {
-      var timestamps = [];
-      var min = Infinity; 
-      var max = -Infinity;
-      var occ = 0;
-      var countries = [];
-      var currcountries = [];
+// get data
+$.getJSON('poliodata.geojson')
+.done(function(data) {
+  var info = processData(data);
+  createPropSymbols(info.timestamps, data, info.currcountries);
+  //createLegend(info.min, info.max);
+  createSliderUI(info.timestamps);
+})
+.fail(function() { alert('There has been a problem loading the data.')});
 
-      for (var feature in data.features)  {
+// process years and countries from data
+function processData(data) {
+  var timestamps = [];
+  var min = Infinity; 
+  var max = -Infinity;
+  var occ = 0;
+  var countries = [];
+  var currcountries = [];
 
-        var properties = data.features[feature].properties; 
-        for (var attribute in properties) { 
+  for (var feature in data.features)  {
 
-          if ( attribute != "FIELD1" &&
-          attribute != "FIELD2") {
+    var properties = data.features[feature].properties; 
+    for (var attribute in properties) { 
 
-            if ( $.inArray(timestamps,attribute) === -1) {
-              timestamps.push(attribute);   
-            }
+      if ( attribute != "FIELD1" &&
+      attribute != "FIELD2") {
 
-            if (properties[attribute] < min) {  
-              min = properties[attribute];
-            }
-
-            if (properties[attribute] > max) { 
-              max = properties[attribute]; 
-            }
-          }
-          else {
-            if(attribute == "FIELD2") {
-              countries.push(properties[attribute]);
-            }
-          }
+        if ( $.inArray(timestamps,attribute) === -1) {
+          timestamps.push(attribute);   
         }
 
-      }
-      return {
-        timestamps : timestamps,
-        min : min,
-        max : max,
-        countries : countries,
-        currcountries : currcountries
-      }
-    }
-
-    // add circlemarkers to map
-    function createPropSymbols(timestamps, data, currcountries=[]) {
-      cities = L.geoJson(data, {    
-        pointToLayer: function(feature, latlng) {
-            return L.circleMarker(latlng, {
-              fillColor: '#708598',
-              color: '#537898',
-              weight: 1, 
-              fillOpacity: 0.6 
-            }).on({
-              mouseover: function(e) {
-                this.openPopup();
-                this.setStyle({color: 'yellow'});
-              },
-              mouseout: function(e) {
-                this.closePopup();
-                this.setStyle({color: '#537898'});
-              }
-            });
+        if (properties[attribute] < min) {  
+          min = properties[attribute];
         }
-      }).addTo(map);
 
-      updatePropSymbols(timestamps[0], data, currcountries);
-    }
-
-    // add popups and remove markers from countries with no occurrences
-    function updatePropSymbols(timestamp, data, currcountries=[]) {
-      //console.log(currcountries);
-      $("cblabel").parent().remove();
-      cities.eachLayer(function(layer) {
-
-        var props = layer.feature.properties;
-        var radius = calcPropRadius(props[timestamp]);
-        // if number of occurrences is 0
-        if(props[timestamp] == 0) {
-          layer.removeFrom(map);
-          var curr = props['FIELD2'];
+        if (properties[attribute] > max) { 
+          max = properties[attribute]; 
         }
-        if(props[timestamp] > 0) {
-          layer.addTo(map);
-          currcountries.push(props['FIELD2']);
-          var div = document.createElement('div');
-          var checkbox = document.createElement('input');
-
-          checkbox.type = "checkbox";
-          checkbox.name = props["FIELD2"];
-          checkbox.value = props[timestamp];
-          checkbox.id = "cbid";
-          checkbox.checked =true;
-
-          var label = document.createElement('cblabel')
-          label.htmlFor = "cbid";
-
-          label.appendChild(document.createTextNode(props["FIELD2"]));
-          cbcountries.appendChild(div);
-          div.appendChild(checkbox);
-          div.appendChild(label);
-          div.appendChild(document.createElement("br"));
-        }
-        var popupContent = '<b>' + String(props[timestamp]) + 
-           ' occurrences</b><br>' +
-           'in </i>' + props['FIELD2'] + ' in ' +
-            timestamp + '</i>';
-        layer.setRadius(radius);
-        layer.bindPopup(popupContent, { offset: new L.Point(0,-radius) });
-      });
-    }
-
-    //returns prop radius depending on number of occurrences
-    function calcPropRadius(attributeValue) {
-      var scaleFactor = 5;
-      var area = attributeValue * scaleFactor;
-      return Math.sqrt(area/Math.PI);     
-    }
-
-//ADDS ALL COUNTRIES TO SIDE PANEL
-  // function updateCountriestoPanel(timestamp) {
-  //   cities.eachLayer(function(layer) {
-  //     var props = layer.feature.properties;
-  //     if(props[timestamp] > 0) {
-  //       var checkbox = document.createElement('input');
-
-  //       checkbox.type = "checkbox";
-  //       checkbox.name = props["FIELD2"];
-  //       checkbox.value = props[timestamp];
-  //       checkbox.id = "cbid";
-  //       checkbox.checked =true;
-
-  //       var label = document.createElement('cblabel')
-  //       label.htmlFor = "cbid";
-  //       label.appendChild(document.createTextNode(props["FIELD2"]));
-  //       cbcountries.appendChild(checkbox);
-  //       cbcountries.appendChild(label);
-  //       cbcountries.appendChild(document.createElement("br"));
-  //     }
-  //   });
-  //}
-
-  //when country checkbox changes
-  $(document).on('click',function () {
-    $('input[type=checkbox]').change(function(){
-      if(this.checked) {
-        console.log($(this).attr('name') + ' checked');
-        curr = $(this).attr('name');
-        cities.eachLayer(function(layer) {
-          var props = layer.feature.properties;
-          var name = props['FIELD2'];
-
-          if(name.localeCompare(curr) == 0){
-            // console.log(name);
-            // console.log(curr);
-            layer.addTo(map);
-          }
-        });
       }
       else {
-        console.log($(this).attr('name') + ' unchecked');
-        curr = $(this).attr('name');
-        cities.eachLayer(function(layer) {
-          var props = layer.feature.properties;
-          var name = props['FIELD2'];
+        if(attribute == "FIELD2") {
+          countries.push(properties[attribute]);
+        }
+      }
+    }
+  }
+  return {
+    timestamps : timestamps,
+    min : min,
+    max : max,
+    countries : countries,
+    currcountries : currcountries
+  }
+}
 
-          if(name.localeCompare(curr) == 0){
-            // console.log(name);
-            // console.log(curr);
-            layer.removeFrom(map); 
+// add circlemarkers to map
+function createPropSymbols(timestamps, data, currcountries=[]) {
+  cities = L.geoJson(data, {    
+    pointToLayer: function(feature, latlng) {
+        return L.circleMarker(latlng, {
+          fillColor: '#708598',
+          color: '#537898',
+          weight: 1, 
+          fillOpacity: 0.6 
+        }).on({
+          mouseover: function(e) {
+            this.openPopup();
+            this.setStyle({color: 'yellow'});
+          },
+          mouseout: function(e) {
+            this.closePopup();
+            this.setStyle({color: '#537898'});
           }
         });
-      }
-    });
+    }
+  }).addTo(map);
+
+  updatePropSymbols(timestamps[0], data, currcountries);
+}
+
+// add popups and remove markers from countries with no occurrences
+function updatePropSymbols(timestamp, data, currcountries=[]) {
+  //console.log(currcountries);
+  $("cblabel").parent().remove();
+  cities.eachLayer(function(layer) {
+
+    var props = layer.feature.properties;
+    var radius = calcPropRadius(props[timestamp]);
+    // if number of occurrences is 0
+    if(props[timestamp] == 0) {
+      layer.removeFrom(map);
+      var curr = props['FIELD2'];
+    }
+    if(props[timestamp] > 0) {
+      layer.addTo(map);
+      currcountries.push(props['FIELD2']);
+      var div = document.createElement('div');
+      var checkbox = document.createElement('input');
+
+      checkbox.type = "checkbox";
+      checkbox.name = props["FIELD2"];
+      checkbox.value = props[timestamp];
+      checkbox.id = "cbid";
+      checkbox.checked =true;
+
+      var label = document.createElement('cblabel')
+      label.htmlFor = "cbid";
+
+      label.appendChild(document.createTextNode(props["FIELD2"]));
+      cbcountries.appendChild(div);
+      div.appendChild(checkbox);
+      div.appendChild(label);
+      div.appendChild(document.createElement("br"));
+    }
+    var popupContent = '<b>' + String(props[timestamp]) + 
+       ' occurrences</b><br>' +
+       'in </i>' + props['FIELD2'] + ' in ' +
+        timestamp + '</i>';
+    layer.setRadius(radius);
+    layer.bindPopup(popupContent, { offset: new L.Point(0,-radius) });
   });
+}
 
-  function createSliderUI(timestamps) {
-    var sliderControl = L.control({ position: 'bottomleft'} );
-    sliderControl.onAdd = function(map) {
-      var slider = L.DomUtil.create('input', 'range-slider');
-      L.DomEvent.addListener(slider, 'mousedown', function(e) { 
-        L.DomEvent.stopPropagation(e); 
-      });
+//returns prop radius depending on number of occurrences
+function calcPropRadius(attributeValue) {
+  var scaleFactor = 5;
+  var area = attributeValue * scaleFactor;
+  return Math.sqrt(area/Math.PI);     
+}
 
-      $(slider)
-      .attr({'type':'range', 
-        'max': timestamps[timestamps.length-1], 
-        'min': timestamps[0], 
-        'step': 1})
-        .on('input change', function() {
-        updatePropSymbols($(this).val().toString());
+//when country checkbox changes
+$(document).on('click',function () {
+  $('input[type=checkbox]').change(function(){
+    if(this.checked) {
+      console.log($(this).attr('name') + ' checked');
+      curr = $(this).attr('name');
+      cities.eachLayer(function(layer) {
+        var props = layer.feature.properties;
+        var name = props['FIELD2'];
+
+        if(name.localeCompare(curr) == 0){
+          // console.log(name);
+          // console.log(curr);
+          layer.addTo(map);
+        }
       });
-      return slider;
     }
-    sliderControl.addTo(map);
-    createTemporalLegend(timestamps[0], timestamps[timestamps.length-1]);
+    else {
+      console.log($(this).attr('name') + ' unchecked');
+      curr = $(this).attr('name');
+      cities.eachLayer(function(layer) {
+        var props = layer.feature.properties;
+        var name = props['FIELD2'];
+
+        if(name.localeCompare(curr) == 0){
+          // console.log(name);
+          // console.log(curr);
+          layer.removeFrom(map); 
+        }
+      });
+    }
+  });
+});
+
+function createSliderUI(timestamps) {
+  var sliderControl = L.control({ position: 'bottomleft'} );
+  sliderControl.onAdd = function(map) {
+    var slider = L.DomUtil.create('input', 'range-slider');
+    L.DomEvent.addListener(slider, 'mousedown', function(e) { 
+      L.DomEvent.stopPropagation(e); 
+    });
+
+    $(slider)
+    .attr({'type':'range', 
+      'max': timestamps[timestamps.length-1], 
+      'min': timestamps[0], 
+      'step': 1})
+      .on('input change', function() {
+      updatePropSymbols($(this).val().toString());
+    });
+    return slider;
+  }
+  sliderControl.addTo(map);
+  createTemporalLegend(timestamps[0], timestamps[timestamps.length-1]);
+}
+
+function createTemporalLegend(startTimestamp, endTimestamp) {
+  var temporalLegend = L.control({ position: 'bottomleft' }); 
+  temporalLegend.onAdd = function(map) { 
+    var output = L.DomUtil.create('output', 'temporal-legend');
+    $(output).text(startTimestamp);
+    return output; 
+  }
+  temporalLegend.addTo(map); 
+}
+
+
+  //map legend
+function createLegend(min, max) {
+  if (min < 10) { 
+    min = 10; 
   }
 
-  function createTemporalLegend(startTimestamp, endTimestamp) {
-    var temporalLegend = L.control({ position: 'bottomleft' }); 
-    temporalLegend.onAdd = function(map) { 
-      var output = L.DomUtil.create('output', 'temporal-legend');
-      $(output).text(startTimestamp);
-      return output; 
-    }
-    temporalLegend.addTo(map); 
+  function roundNumber(inNumber) {
+    return (Math.round(inNumber/10) * 10);  
   }
 
+  var legend = L.control( { position: 'topright' } );
 
-    //map legend
-  // function createLegend(min, max) {
-  //   if (min < 10) { 
-  //     min = 10; 
-  //   }
+  legend.onAdd = function(map) {
 
-  //   function roundNumber(inNumber) {
-  //     return (Math.round(inNumber/10) * 10);  
-  //   }
+    var legendContainer = L.DomUtil.create('div', 'legend');  
+    var symbolsContainer = L.DomUtil.create('div', 'symbolsContainer');
+    var classes = [roundNumber(min), roundNumber((max-min)/2), roundNumber(max)]; 
+    var legendCircle;  
+    var lastRadius = 0;
+    var currentRadius;
+    var margin;
 
-  //   var legend = L.control( { position: 'bottomright' } );
+    L.DomEvent.addListener(legendContainer, 'mousedown', function(e) { 
+      L.DomEvent.stopPropagation(e); 
+    });  
 
-  //   legend.onAdd = function(map) {
+  $(legendContainer).append('<h4 id="legendTitle"># of occurrences</h4>');
+  
+  for (var i = 0; i <= classes.length-1; i++) {  
 
-  //     var legendContainer = L.DomUtil.create('div', 'legend');  
-  //     var symbolsContainer = L.DomUtil.create('div', 'symbolsContainer');
-  //     var classes = [roundNumber(min), roundNumber((max-min)/2), roundNumber(max)]; 
-  //     var legendCircle;  
-  //     var lastRadius = 0;
-  //     var currentRadius;
-  //     var margin;
-
-  //     L.DomEvent.addListener(legendContainer, 'mousedown', function(e) { 
-  //       L.DomEvent.stopPropagation(e); 
-  //     });  
-
-  //   $(legendContainer).append('<h2 id="legendTitle"># of occurrences</h2>');
+    legendCircle = L.DomUtil.create('div', 'legendCircle');  
     
-  //   for (var i = 0; i <= classes.length-1; i++) {  
+    currentRadius = calcPropRadius(classes[i]);
+    
+    margin = -currentRadius - lastRadius - 2;
 
-  //     legendCircle = L.DomUtil.create('div', 'legendCircle');  
-      
-  //     currentRadius = calcPropRadius(classes[i]);
-      
-  //     margin = -currentRadius - lastRadius - 2;
+    $(legendCircle).attr('style', 'width: ' + currentRadius*2 + 
+      'px; height: ' + currentRadius*2 + 
+      'px; margin-left: ' + margin + 'px' );        
+    $(legendCircle).append('<span class="legendValue">'+classes[i]+'</span>');
 
-  //     $(legendCircle).attr('style', 'width: ' + currentRadius*2 + 
-  //       'px; height: ' + currentRadius*2 + 
-  //       'px; margin-left: ' + margin + 'px' );        
-  //     $(legendCircle).append('<span class="legendValue">'+classes[i]+'</span>');
+    $(symbolsContainer).append(legendCircle);
 
-  //     $(symbolsContainer).append(legendCircle);
+    lastRadius = currentRadius;
+  }
 
-  //     lastRadius = currentRadius;
-  //   }
-
-  //   $(legendContainer).append(symbolsContainer); 
-  //   return legendContainer; 
-  //   };
-  //   legend.addTo(map);
-  //   console.log("added!");
-  // }
-</script>
-</body>
+  $(legendContainer).append(symbolsContainer); 
+  return legendContainer; 
+  };
+  legend.addTo(map);
+  console.log("added!");
+}
+    </script>
+  </body>
 </html>
