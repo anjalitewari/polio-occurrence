@@ -205,7 +205,7 @@ function calcPropRadius(attributeValue) {
 $(document).on('click',function () {
   $('input[type=checkbox]').change(function(){
     if(this.checked) {
-      console.log($(this).attr('name') + ' checked');
+      //console.log($(this).attr('name') + ' checked');
       curr = $(this).attr('name');
       cities.eachLayer(function(layer) {
         var props = layer.feature.properties;
@@ -219,7 +219,7 @@ $(document).on('click',function () {
       });
     }
     else {
-      console.log($(this).attr('name') + ' unchecked');
+      //console.log($(this).attr('name') + ' unchecked');
       curr = $(this).attr('name');
       cities.eachLayer(function(layer) {
         var props = layer.feature.properties;
@@ -269,57 +269,57 @@ function createTemporalLegend(startTimestamp, endTimestamp) {
 
 
   //map legend
-function createLegend(min, max) {
-  if (min < 10) { 
-    min = 10; 
-  }
+// function createLegend(min, max) {
+//   if (min < 10) { 
+//     min = 10; 
+//   }
 
-  function roundNumber(inNumber) {
-    return (Math.round(inNumber/10) * 10);  
-  }
+//   function roundNumber(inNumber) {
+//     return (Math.round(inNumber/10) * 10);  
+//   }
 
-  var legend = L.control( { position: 'topright' } );
+//   var legend = L.control( { position: 'topright' } );
 
-  legend.onAdd = function(map) {
+//   legend.onAdd = function(map) {
 
-    var legendContainer = L.DomUtil.create('div', 'legend');  
-    var symbolsContainer = L.DomUtil.create('div', 'symbolsContainer');
-    var classes = [roundNumber(min), roundNumber((max-min)/2), roundNumber(max)]; 
-    var legendCircle;  
-    var lastRadius = 0;
-    var currentRadius;
-    var margin;
+//     var legendContainer = L.DomUtil.create('div', 'legend');  
+//     var symbolsContainer = L.DomUtil.create('div', 'symbolsContainer');
+//     var classes = [roundNumber(min), roundNumber((max-min)/2), roundNumber(max)]; 
+//     var legendCircle;  
+//     var lastRadius = 0;
+//     var currentRadius;
+//     var margin;
 
-    L.DomEvent.addListener(legendContainer, 'mousedown', function(e) { 
-      L.DomEvent.stopPropagation(e); 
-    });  
+//     L.DomEvent.addListener(legendContainer, 'mousedown', function(e) { 
+//       L.DomEvent.stopPropagation(e); 
+//     });  
 
-  $(legendContainer).append('<h4 id="legendTitle"># of occurrences</h4>');
+//   $(legendContainer).append('<h4 id="legendTitle"># of occurrences</h4>');
   
-  for (var i = 0; i <= classes.length-1; i++) {  
+//   for (var i = 0; i <= classes.length-1; i++) {  
 
-    legendCircle = L.DomUtil.create('div', 'legendCircle');  
+//     legendCircle = L.DomUtil.create('div', 'legendCircle');  
     
-    currentRadius = calcPropRadius(classes[i]);
+//     currentRadius = calcPropRadius(classes[i]);
     
-    margin = -currentRadius - lastRadius - 2;
+//     margin = -currentRadius - lastRadius - 2;
 
-    $(legendCircle).attr('style', 'width: ' + currentRadius*2 + 
-      'px; height: ' + currentRadius*2 + 
-      'px; margin-left: ' + margin + 'px' );        
-    $(legendCircle).append('<span class="legendValue">'+classes[i]+'</span>');
+//     $(legendCircle).attr('style', 'width: ' + currentRadius*2 + 
+//       'px; height: ' + currentRadius*2 + 
+//       'px; margin-left: ' + margin + 'px' );        
+//     $(legendCircle).append('<span class="legendValue">'+classes[i]+'</span>');
 
-    $(symbolsContainer).append(legendCircle);
+//     $(symbolsContainer).append(legendCircle);
 
-    lastRadius = currentRadius;
-  }
+//     lastRadius = currentRadius;
+//   }
 
-  $(legendContainer).append(symbolsContainer); 
-  return legendContainer; 
-  };
-  legend.addTo(map);
-  console.log("added!");
-}
+//   $(legendContainer).append(symbolsContainer); 
+//   return legendContainer; 
+//   };
+//   legend.addTo(map);
+//   //console.log("added!");
+// }
     </script>
   </body>
 </html>
